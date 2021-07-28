@@ -29,6 +29,13 @@ return function (App $app) {
         return $response->getBody()->write((string)json_encode($result));
     });
 
+    $app->get("/getDetailExercise", function (Request $request, Response $response){       
+        $input=$request->getParsedBody();     
+        $class = new All();
+        $result = $class->getDetailExercise($input['uid_exercise']);
+        return $response->getBody()->write((string)json_encode($result));
+    });
+
     $app->post("/uploadGambar", function (Request $request, Response $response){       
         $body=$request->getParsedBody();
         $file=$request->getUploadedFiles();
@@ -44,6 +51,14 @@ return function (App $app) {
             return "asd";
         }
 
+    });
+
+    $app->get("/getImage", function (Request $request, Response $response){       
+        $input=$request->getParsedBody();     
+        $class = new All();
+        $result = $class->getImage($input['filename']);
+
+        return $response->getBody()->write((string)json_encode($result));
     });
 
     //member service
@@ -70,7 +85,7 @@ return function (App $app) {
             }
         });
 
-        $app->post("/updateProfile", function (Request $request, Response $response){       
+        $app->put("/updateProfile", function (Request $request, Response $response){       
             $input=$request->getParsedBody();     
             $class = new User();
             $result = $class->updateProfile(
@@ -100,12 +115,127 @@ return function (App $app) {
                 return $response->withJson(["status"=>"false","message"=>$result]);
             }
         });
+
+        $app->post("/addExerciseToFav", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new User();
+            $result = $class->addExerciseFav(
+                $input['uid_user'],
+                $input['uid_exercise'],
+                $input['category1'],
+                $input['category2'],
+                $input['nama'],
+                $input['desc'],
+                $input['picture'],
+                $input['video']
+            );
+            if ($result['status']=="true"){
+                return $response->withJson(["status"=>"true","message"=>"Insert Success"]); 
+            } else {
+                return $response->withJson(["status"=>"false","message"=>$result]);
+            }
+        });
+
+        $app->get("/getUserFavExercise/{id}", function (Request $request, Response $response, Array $args){       
+                
+            $class = new User();
+            $result = $class->getUserFav($args['id']);    
+
+            return $response->getBody()->write((string)json_encode($result));
+            // if ($result['status']=="true"){
+            //     return $response->withJson(["status"=>"true","message"=>"Insert Success"]); 
+            // } else {
+            //     return $response->withJson(["status"=>"false","message"=>$result]);
+            // }
+        });
+
+        $app->put("/removeUserFavExercise", function (Request $request, Response $response, Array $args){       
+            $input=$request->getParsedBody();
+            $class = new User();
+            $result = $class->removeUserFav($input['id_user'],$input['id_exer']);    
+
+            if ($result=="berhasil"){
+                return $response->withJson(["status"=>"true","message"=>"Delete Success"]); 
+            } else {
+                return $response->withJson(["status"=>"false","message"=>$result]);
+            }
+
+            // return $response->getBody()->write((string)json_encode($result));
+        });
+
+        $app->get("/getFavOrNot/{id_user}/{id_exe}", function (Request $request, Response $response, Array $args){      
+            $class= new User();
+
+            $result = $class->getFavOrNot($args['id_user'],$args['id_exe']);    
+
+            $hasil=[
+                "message"=>$result
+            ];
+
+            return $response->getBody()->write((string)json_encode($hasil));
+        });
+
+        $app->get("/getAllWorkouts", function (Request $request, Response $response, Array $args){           
+            $class = new User();
+            $result = $class->getAllWorkouts();    
+
+            return $response->getBody()->write((string)json_encode($result));
+            // if ($result['status']=="true"){
+            //     return $response->withJson(["status"=>"true","message"=>"Insert Success"]); 
+            // } else {
+            //     return $response->withJson(["status"=>"false","message"=>$result]);
+            // }
+        });
+
+        $app->get("/getAllTemp", function (Request $request, Response $response, Array $args){           
+            $class = new User();
+            $result = $class->getAllTemp();    
+
+            return $response->getBody()->write((string)json_encode($result));
+            // }
+        });
+
+        $app->get("/getWorkouts", function (Request $request, Response $response, Array $args){           
+            $input=$request->getParsedBody();
+            $class = new User();
+            $result = $class->getWorkouts($input['uid']);    
+
+            return $response->getBody()->write((string)json_encode($result));
+            // }
+        });
+
     });
 
     //trainer service
     $app->group('/trainer',function(\Slim\App $app)
     {
+        $app->post("/addNewWorkouts", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new Trainer();
+            $result = $class->addNewWorkouts($input['creator'],
+            $input['name'],$input['desc'],$input['category'],$input['duration'],
+            $input['level'],$input['picture'],$input['exercises']);
+            
+            if ($result['status']=="true"){
+                return $response->withJson(["status"=>"true","message"=>"Insert Success"]); 
+            } else {
+                return $response->withJson(["status"=>"false","message"=>$result]);
+            }
+            
+        });
 
+        $app->post("/test", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new Trainer();
+            $result = $class->test($input['exercises']);
+            
+            // if ($result['status']=="true"){
+            //     return $response->withJson(["status"=>"true","message"=>"Insert Success"]); 
+            // } else {
+            //     return $response->withJson(["status"=>"false","message"=>$result]);
+            // }
+            return $result;
+        });
     });
     
     //admin service
@@ -123,6 +253,36 @@ return function (App $app) {
             $class = new Admin();
             $result = $class->loginAdmin($input['email'],$input['password']);
     
+            return $response->getBody()->write((string)json_encode($result));
+        });
+
+        $app->post("/addExercise", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new All();
+            $result = $class->addExercise($input['category1'],$input['category2'],$input['nama'],$input['desc'],$input['picture'],$input['video']);
+            return $response->getBody()->write((string)json_encode($result));
+        });
+
+        $app->get("/getAllExercise", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new All();
+            $result = $class->getAllExercise();
+            return $response->getBody()->write((string)json_encode($result));
+        });
+
+        $app->post("/activateUser", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new Admin();
+
+            $result = $class->activateUser($input['uid']);
+            return $response->getBody()->write((string)json_encode($result));
+        });
+
+        $app->post("/deactivateUser", function (Request $request, Response $response){       
+            $input=$request->getParsedBody();     
+            $class = new Admin();
+
+            $result = $class->deactivateUser($input['uid']);
             return $response->getBody()->write((string)json_encode($result));
         });
     });
@@ -147,15 +307,6 @@ class All{
             $signInResult->firebaseUserId();
             if ($signInResult){
                 $data=$this->database->getReference("users")->getChild($signInResult->firebaseUserId())->getValue();
-                // $data = [
-                //     "uid"=>$signInResult->firebaseUserId(),
-                //     "nama"=>$this->database->getReference("users")
-                //         ->getChild($signInResult->firebaseUserId())
-                //         ->getChild("nama")->getValue(),
-                //     "type"=>$this->database->getReference("users")
-                //     ->getChild($signInResult->firebaseUserId())
-                //     ->getChild("type")->getValue()
-                // ];
                 $response=[
                     "data"=>$data,
                     "uid"=>$signInResult->firebaseUserId(),
@@ -178,7 +329,6 @@ class All{
     }
 
     public function getSuggestion($value){
-        
     }
 
     public function addWeight($uid,$berat,$tanggal){
@@ -187,20 +337,45 @@ class All{
 
         //update berat di db utama
         $this->database->getReference("users/".$uid."/berat")->set($berat);
+
+        return "berhasil";
     }
 
     public function getExercise($category){
         return array_values($this->database->getReference("exercise")->getChild($category)->getValue());
     }
 
-    public function addExercise($category,$name,$desc){
-        $postData=["name"=>$name , "desc"=>$desc];
-        $postRef=$this->database->getReference("exercise/".$category)->push($postData);
+    public function getImage($filename){ 
+    }
 
-        return $postRef->getKey();
-        
-        //$this->database->getReference("exercise/".$category."/".$name."/desc")->set($desc);
+    public function addExercise($ctg1,$ctg2,$name,$desc,$picture,$video){
+        try{
+            $postData=["name"=>$name , "desc"=>$desc,"category1"=>$ctg1,"category2"=>$ctg2, "picture"=>$picture,"video"=>$video];
+            $postRef=$this->database->getReference("exercise")->push($postData);
+            
+            $this->database->getReference("exercise/".$postRef->getKey()."/uid")->set($postRef->getKey());
 
+            $response=[
+                "message"=>"Add Exercise Success",
+                "status"=>"true"
+            ];
+
+            return $response;
+        } catch (Exception $e){
+            $response=[
+                "message"=>$e->getMessage(),
+                "status"=>"false"
+            ];
+            return $response;
+        }
+    }
+
+    public function getAllExercise(){
+        return array_values($this->database->getReference("exercise")->getValue());
+    }
+
+    public function getDetailExercise($uid){
+        return $this->database->getReference("exercise/".$uid)->getValue();
     }
 }
 
@@ -219,17 +394,96 @@ class User {
 
     }
 
+    public function addExerciseFav($uid_user,$uid_exercise,$category1,$category2,$nama,$desc,$picture,$video){
+        $postData=[
+            "uid"=>$uid_exercise,
+            "category1"=>$category1,
+            "category2"=>$category2,
+            "name"=>$nama,
+            "desc"=>$desc,
+            "picture"=>$picture,
+            "video"=>$video
+        ];
+
+        $postRef=$this->database->getReference('user-exercise/'.$uid_user)->push($postData);
+        $response=[
+            "message"=>"Add Favourites Success",
+            "status"=>"true"
+        ];
+
+        return $response;
+    }
+
+    public function getUserFav($uid_user){
+        return array_values($this->database->getReference('user-exercise/'.$uid_user)->getValue());
+    }
+
+    public function getFavOrNot($id_user,$id_exercise){
+        if ($this->database->getReference('user-exercise')->getSnapshot()->hasChild($id_user))
+        {
+            //ada
+            $val=$this->database->getReference('user-exercise/'.$id_user)->getValue();
+
+            foreach ($val as $value){
+                if ($value["uid"]==$id_exercise){
+                    $message="Ada";
+                    break;
+                } else {
+                    $message="Tidak Ada";
+                }
+            }          
+        } else {
+            $message="Tidak Ada";
+        }
+        return $message;  
+    }
+
+    public function removeUserFav($id_user,$id_exercise){
+        
+        $reference=$this->database->getReference('user-exercise/'.$id_user)->orderByChild('uid')->equalTo($id_exercise);
+        $snapshot=$reference->getSnapshot();
+
+        $value = $snapshot->getValue();
+        $yourKey="";
+
+        foreach ($value as $key => $value){
+            $yourKey=$key;
+        }
+
+        $this->database->getReference('user-exercise/'.$id_user.'/'.$yourKey)->set(null);
+
+        return "berhasil";
+
+    }
+
     public function updateProfile($uid, $nama, $tinggi, $berat){
-        try {            
+        try {  
             if ($this->database->getReference($this->dbname)->getSnapshot()->hasChild($uid)){
+
                 $this->database->getReference("users/".$uid."/nama")->set($nama);
                 $this->database->getReference("users/".$uid."/tinggi")->set($tinggi);
                 $this->database->getReference("users/".$uid."/berat")->set($berat);
 
                 return "berhasil";
-            }
- 
+
+                //how to update
+                // $postData=[
+                //     "nama"=>$nama,
+                //     "tinggi"=>$tinggi
+                // ];
+
+                // $updates=[
+                //     "users/".$uid => $postData
+                // ];
+
+                // if ($this->database->getReference()->update($updates)){
+                //     return "berhasil";
+                // }
+            
+            } 
+            
             return "gagal";
+
         } catch (Exception $e) {
             return $e->getMessage();
         }
@@ -258,6 +512,7 @@ class User {
             $this->database->getReference("users/".$uid."/berat")->set($berat);
             $this->database->getReference("users/".$uid."/type")->set($type);
             $this->database->getReference("users/".$uid."/premium")->set("No");
+            $this->database->getReference("users/".$uid."/aktif")->set("Yes");
 
             //updating berat
             $this->database->getReference("berat/".$uid."/".$tanggal_berat)->set($tanggal_berat);
@@ -282,36 +537,91 @@ class User {
         return $this->database->getReference($this->dbname)->getValue();
     }
 
-    // public function get(string $userID = NULL){
-    //     if (empty($userID) || !isset($userID)) { return false; }
+    public function getAllTemp(){
+        return array_values($this->database->getReference('workouts')->getValue());
+    }
 
-    //     if ($this->database->getReference($this->dbname)->getSnapshot()->hasChild($userID)){
-    //         return $this->database->getReference($this->dbname)->getChild($userID)->getValue();
-    //     } else {
-    //         return false; 
-    //     }
-    // }
+    public function getWorkouts($uid){
+        return $this->database->getReference('workouts/'.$uid)->getValue();
+    }
 
-    public function insert(array $data){
-        if (empty($data) || !isset($data)) { return false; }
+    public function getAllWorkouts(){
+        $temp1=$this->database->getReference('workouts')->getValue();
+    
+        foreach ($temp1 as $value){
+            $category=$value['category'];
+            $level=$value['level'];
+            $duration=$value['duration'];
+            $picture=$value['picture'];
+            $uid=$value['uid'];
 
-        foreach ($data as $key => $value){
-            $this->database->getReference()->getChild($this->dbname)->getChild($key)->set($value);
-        }
+            $array[$value['uid']]["category"]=$category;
+            $array[$value['uid']]["level"]=$level;
+            $array[$value['uid']]["duration"]=$duration;
+            $array[$value['uid']]["picture"]=$picture;
+            $array[$value['uid']]["uid"]=$uid;
 
-        return true;
+            // $temp2=$this->database->getReference('workouts/wo1/exercises')->getValue();
+
+            // foreach ($temp2 as $val){
+            //     $array[$value['uid']]["exercises"][$val['uid']]['desc']=$val['desc'];
+            //     $array[$value['uid']]["exercises"][$val['uid']]['duration']=$val['duration'];
+            //     $array[$value['uid']]["exercises"][$val['uid']]['nama']=$val['nama'];
+            //     $array[$value['uid']]["exercises"][$val['uid']]['picture']=$val['picture'];
+            // }
+    
+        }  
+
+        return array_values($array);
+        // return $temp1;
+        //return array_values($this->database->getReference('workouts')->getValue());
+    }
+}
+
+class Trainer{
+    public function __construct(){
+        $factory = (new Factory)->withServiceAccount(__DIR__. '\secret\tugasakhir-273202-6ee1f9786c82.json');
+        
+        $database = $factory->createDatabase();
+        $auth=$factory->createAuth();
+
+        $this->auth=$auth;
+        $this->database=$database;
 
     }
 
-    public function delete(int $userID){
-        if (empty($userID) || !isset($userID)) { return false; }
+    public function addNewWorkouts($creator,$name,$desc,$category,$duration,$level,$picture,$exercises){
+        try{
+            $postData=["creator"=>$creator,"name"=>$name,"desc"=>$desc,"category"=>$category,"duration"=>$duration,"level"=>$level,"picture"=>$picture];
+            $postRef=$this->database->getReference("workouts")->push($postData);
+            
+            $this->database->getReference("workouts/".$postRef->getKey()."/uid")->set($postRef->getKey());
+    
+            foreach (json_decode($exercises,true) as $value) {
+                $postData2=[
+                    "desc"=>$value['desc'],
+                    "duration"=>$value['durasi'],
+                    "nama"=>$value['name'],
+                    "picture"=>$value['picture']
+                ];
 
-        if ($this->database->getReference($this->dbname)->getSnapshot()->hasChild($userID)){
-            $this->database->getReference($this->dbname)->getChild($userID)->remove();
-            return true;
-        } else {
-            return false;
+                $postRef2=$this->database->getReference("workouts/".$postRef->getKey()."/exercises")->push($postData2);
+
+                $this->database->getReference("workouts/".$postRef->getKey()."/exercises/".$postRef2->getKey()."/uid")->set($postRef2->getKey());
+            }
+
+            $response=[
+                "message"=>"Add Workouts Success",
+                "status"=>"true"
+            ];
+
+        } catch (Exception $e){
+            $response=[
+                "message"=>$e->getMessage(),
+                "status"=>"false"
+            ];
         }
+        return $response;
     }
 }
 
@@ -351,6 +661,53 @@ class Admin{
             return $response;
         }
     }
+
+    public function activateUser($uid){
+        try {
+            if ($this->database->getReference('users')->getChild($uid)->getValue()){
+                $this->database->getReference("users/".$uid."/aktif")->set("Yes");
+                $response=[                    
+                    "status"=>"true",
+                    "message"=>"Update Succes"
+                ];
+            } else {
+                $response=[
+                    "message"=>"wrong uid",
+                    "status="=>"false"
+                ];
+            }
+        } catch (Exception $e){
+            $response=[
+                "message"=>$e->getMessage(),
+                "status="=>"false"
+            ];
+        }
+        return $response;
+    }
+
+    public function deactivateUser($uid){
+        try {
+            if ($this->database->getReference('users')->getChild($uid)->getValue()){
+                $this->database->getReference("users/".$uid."/aktif")->set("No");
+                $response=[                    
+                    "status"=>"true",
+                    "message"=>"Update Succes"
+                ];
+            } else {
+                $response=[
+                    "message"=>"wrong uid",
+                    "status="=>"false"
+                ];
+            }
+        } catch (Exception $e){
+            $response=[
+                "message"=>$e->getMessage(),
+                "status="=>"false"
+            ];
+        }
+        return $response;
+    }
+
 }
 
 class Berat {
